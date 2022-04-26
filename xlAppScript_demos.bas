@@ -28,7 +28,7 @@ Sub method_2()
 Call connectWb
 
 '//Set file containing xlAppScript to a variable
-xFile = Dr & Env & "\documents\demo.txt"
+  xFile = Environ("USERPROFILE") & "\documents\demo.txt"
 
 Open xFile For Input As #1 '//open file
 Do Until EOF(1) '//search until the end
