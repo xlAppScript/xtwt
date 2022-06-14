@@ -3,7 +3,7 @@ Public Function runLib$(xArt)
 '/\____________________________________________________________________________________________________________________________
 '//
 '//       xtwt Library
-'//         Version: 1.0.4
+'//         Version: 1.0.5
 '/\_____________________________________________________________________________________________________________________________
 '//
 '//     License Information:
@@ -34,28 +34,27 @@ Public Function runLib$(xArt)
 '//                             (previous versions not tested &/or unsupported)
 '/\____________________________________________________________________________________________________________________________
 '//
-'//     Latest Revision: 4/25/2022
+'//     Latest Revision: 6/6/2022
 '/\____________________________________________________________________________________________________________________________
 '//
 '//     Developer(s): anz7re
 '//     Contact: support@xlappscript.org | support@autokit.tech | anz7re@autokit.tech
 '//     Web: xlappscript.org | autokit.tech
 '/\____________________________________________________________________________________________________________________________
-'//
 
-        
         '//Library variable declarations
-        Dim appEnv As String: Dim appBlk As String: Dim errLvl As String: Dim wbMacro As String: Dim C As String: Dim E As String
+        Dim appEnv As String: Dim appBlk As String: Dim errLvl As Byte: Dim wbMacro As String
+        Dim M As String: Dim S As String: Dim P As String
         Dim X As Variant: Dim x1 As Variant: Dim x2 As Variant
         Dim oBox As Object: Dim oItem As Object
         
-        '//Pre-clean
+        '//Pre-cleanup
         X = 0: X = CByte(X): x1 = 0: x1 = CByte(x1): x2 = 0: x2 = CByte(x2)
         Set oBox = Nothing: Set oItem = Nothing
         Call modArtQ(xArt)
             
         '//Find application environment & block
-        Call findEnvironment(appEnv, appBlk)
+        Call fndEnvironment(appEnv, appBlk)
         
         '//Find flags
         If InStr(1, xArt, "--") Or InStr(1, xArt, "++") Then _
@@ -63,12 +62,11 @@ Public Function runLib$(xArt)
         Call libSwitch(xArt, errLvl) '//Find switches
        
         '//Set library error level
-        If Range("xlasLibErrLvl").Value = 0 Then On Error GoTo ErrMsg Else _
-        If Range("xlasLibErrLvl").Value = 1 Then On Error Resume Next
+        If Range("xlasLibErrLvl").Value2 = 0 Then On Error GoTo ErrMsg
+        If Range("xlasLibErrLvl").Value2 = 1 Then On Error Resume Next
         
         '//Check for ADA Article
         If InStr(1, xArt, "app.") Then GoTo ADALink
-        
                      
 '/\_____________________________________
 '//
@@ -84,9 +82,9 @@ Public Function runLib$(xArt)
         If InStr(1, xArt, "del.") Then GoTo DelProfile '//check for delete profile...
         If InStr(1, xArt, "mk.") Then GoTo NewProfile '//check for make new profile...
         
-        Call App_TOOLS.FindForm(xForm)
-        xForm.ProfileListBox.Value = xArt
-        Workbooks(appEnv).Worksheets(appBlk).Range("Profile").Value = xArt
+        Call fndWindow(xWin)
+        xWin.ProfileListBox.Value = xArt
+        Workbooks(appEnv).Worksheets(appBlk).Range("Profile").Value2 = xArt
         Exit Function
         
         '//Set User
@@ -100,10 +98,10 @@ Public Function runLib$(xArt)
         xArt = Replace(xArt, "user(", vbNullString, , , vbTextCompare)
         Call modArtP(xArt): Call modArtQ(xArt)
         xUser = xArt
-        Workbooks(appEnv).Worksheets(appBlk).Range("User").Value = xUser
-        Call App_TOOLS.FindForm(xForm)
-        xForm.UserListBox.Value = xUser
-        Call App_CLICK.SetActive_Clk(xUser)
+        Workbooks(appEnv).Worksheets(appBlk).Range("User").Value2 = xUser
+        Call fndWindow(xWin)
+        xWin.UserListBox.Value = xUser
+        Call eTweetXL_CLICK.SetActive_Clk(xUser)
         Exit Function
 
 
@@ -112,22 +110,22 @@ Public Function runLib$(xArt)
         xArt = Replace(xArt, "post(", vbNullString, , , vbTextCompare)
         Call modArtP(xArt): Call modArtQ(xArt)
         
-        If xArt = vbNullString Then wbMacro = Workbooks(appEnv).Application.Run("App_Focus.SH_ETWEETXLPOST"): Exit Function      '//nothing entered show post setup
+        If xArt = vbNullString Then wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_Focus.shw_ETWEETXLPOST"): Exit Function      '//nothing entered show post setup
         
         '//special characters/wildcards
         If InStr(1, xArt, ",") Then
         xArtArr = Split(xArt, ",")
         '//switches
-        If InStr(1, xArtArr(1), "-true", vbTextCompare) Or InStr(1, xArtArr(1), "1") Then C = "T"
-        If InStr(1, xArtArr(1), "-false", vbTextCompare) Or InStr(1, xArtArr(1), "0") Then C = "F"
-        Call App_TOOLS.FindForm(xForm)
-        xForm.PostBox.Value = xForm.PostBox.Value & xArtArr(0)
-        If C = "T" Then Call App_CLICK.SavePost_Clk
+        If InStr(1, xArtArr(1), "-true", vbTextCompare) Or InStr(1, xArtArr(1), "1") Then S = "T"
+        If InStr(1, xArtArr(1), "-false", vbTextCompare) Or InStr(1, xArtArr(1), "0") Then S = "F"
+        Call fndWindow(xWin)
+        xWin.PostBox.Value = xWin.PostBox.Value & xArtArr(0)
+        If S = "T" Then Call eTweetXL_CLICK.SavePostBtn_Clk
         Exit Function
         End If
         
-        Call App_TOOLS.FindForm(xForm)
-        xForm.PostBox.Value = xForm.PostBox.Value & xArt
+        Call fndWindow(xWin)
+        xWin.PostBox.Value = xWin.PostBox.Value & xArt
         Exit Function
         
         '//Add draft name
@@ -142,11 +140,11 @@ Public Function runLib$(xArt)
         xArt = Replace(xArt, "med(", "", , , vbTextCompare)
         Call modArtP(xArt): Call modArtQ(xArt)
         
-        If InStr(1, xArt, "add.", vbTextCompare) Then C = "A" '//Check for add...
-        If InStr(1, xArt, "rmv.", vbTextCompare) Then C = "R" '//Check for remove...
+        If InStr(1, xArt, "add.", vbTextCompare) Then M = "A" '//Check for add...
+        If InStr(1, xArt, "rmv.", vbTextCompare) Then M = "R" '//Check for remove...
         '//special characters/wildcards
-        If InStr(1, xArt, "*") Then C = C & "0" '//Check for all...
-        If InStr(1, xArt, ",") Then C = C & "1" '//Check for and...
+        If InStr(1, xArt, "*") Then M = M & "0" '//Check for all...
+        If InStr(1, xArt, ",") Then M = M & "1" '//Check for and...
         
         xArt = Replace(xArt, "add.", "", , , vbTextCompare)
         xArt = Replace(xArt, "rmv.", "", , , vbTextCompare)
@@ -161,47 +159,47 @@ Public Function runLib$(xArt)
         
         xMed = xArt
         
-        If C = "A" Then GoTo AddMedia
-        If C = "A0" Then GoTo AddMultiMedia
-        If C = "A1" Then GoTo AddMultiMedia
-        If C = "A01" Then GoTo AddMultiMedia
-        If C = "R" Then GoTo RmvMedia
-        If C = "R0" Then GoTo RmvAllMedia
-        If C = "R1" Then GoTo RmvMultiMedia
-        If C = "R01" Then GoTo RmvAllMedia
+        If M = "A" Then GoTo AddMedia
+        If M = "A0" Then GoTo AddMultiMedia
+        If M = "A1" Then GoTo AddMultiMedia
+        If M = "A01" Then GoTo AddMultiMedia
+        If M = "R" Then GoTo RmvMedia
+        If M = "R0" Then GoTo RmvAllMedia
+        If M = "R1" Then GoTo RmvMultiMedia
+        If M = "R01" Then GoTo RmvAllMedia
     
         Exit Function
         
 AddMedia:
         '//add single media
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.AddPostMed_Clk", (xMed))
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.AddPostMedBtn_Clk", (xMed))
         Exit Function
         
 AddMultiMedia:
         '//add multi media
         For X = 0 To xLast
         xMed = xArtArr(X)
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.AddPostMed_Clk", (xMed))
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.AddPostMedBtn_Clk", (xMed))
         Next
         Exit Function
 
     
 RmvMedia:
         '//rmv single media
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.RmvPostMed_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.RmvPostMedBtn_Clk")
         Exit Function
 
 RmvMultiMedia:
         '//rmv multi media
         For X = 0 To xLast
         xMed = xArtArr(X)
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.RmvPostMed_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.RmvPostMedBtn_Clk")
         Next
         Exit Function
         
 RmvAllMedia:
         Do Until ETWEETXLPOST.MedLinkBox.Value = vbNullString
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.RmvPostMed_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.RmvPostMedBtn_Clk")
         Loop
         Exit Function
         
@@ -210,52 +208,52 @@ RmvAllMedia:
         xArt = Replace(xArt, "thread(", "", , , vbTextCompare)
         Call modArtP(xArt): Call modArtQ(xArt)
         
-        If InStr(1, xArt, "add.", vbTextCompare) Then C = "A" '//Check for add...
-        If InStr(1, xArt, "rmv.", vbTextCompare) Then C = "R" '//Check for remove...
+        If InStr(1, xArt, "add.", vbTextCompare) Then M = "A" '//Check for add...
+        If InStr(1, xArt, "rmv.", vbTextCompare) Then M = "R" '//Check for remove...
         '//special characters/wildcards
-        If InStr(1, xArt, "*") Then C = C & "0" '//Check for all...
-        If InStr(1, xArt, ",") Then C = C & "1" '//Check for and...
+        If InStr(1, xArt, "*") Then M = M & "0" '//Check for all...
+        If InStr(1, xArt, ",") Then M = M & "1" '//Check for and...
         
         xArt = Replace(xArt, "add.", "", , , vbTextCompare)
         xArt = Replace(xArt, "rmv.", "", , , vbTextCompare)
         xArt = Replace(xArt, "*", vbNullString)
         Call modArtP(xArt)
         
-        '//check for parameters...
+        '//check for arguments...
         If InStr(1, xArt, ",") Then
         xArtArr = Split(xArt, ",")
         xLast = UBound(xArtArr) - LBound(xArtArr)
         
         '//add string to single thread
-        If C = "1" Then
+        If M = "1" Then
         Range("ThreadScrollPos").Value = xArtArr(0)
-        Range("PostThread").Offset(xArtArr(0), 0).Value = xArtArr(1) '//2 parameters
-        If xLast > 1 Then Range("MedThread").Offset(xArtArr(0), 0).Value = xArtArr(2) '//3 parameters
+        Range("PostThread").Offset(xArtArr(0), 0).Value = xArtArr(1) '//2 arguments
+        If xLast > 1 Then Range("MedThread").Offset(xArtArr(0), 0).Value = xArtArr(2) '//3 arguments
         Exit Function
         End If
 
         '//add string to all threads
-        If C = "01" Then
+        If M = "01" Then
         lRow = Cells(Rows.Count, "Y").End(xlUp).Row
         If lRow < 1 Then lRow = Cells(Rows.Count, "Z").End(xlUp).Row
         
         For X = 1 To lRow
-        Range("PostThread").Offset(X, 0).Value = xArtArr(1) '//2 parameters
-        If xLast > 1 Then Range("MedThread").Offset(X, 0).Value = xArtArr(2) '//3 parameters
+        Range("PostThread").Offset(X, 0).Value2 = xArtArr(1) '//2 arguments
+        If xLast > 1 Then Range("MedThread").Offset(X, 0).Value2 = xArtArr(2) '//3 arguments
         Next
         Exit Function
             End If
                 End If
         
-        If C = vbNullString And xArt = vbNullString Then GoTo AddThread
-        If C = vbNullString And xArt <> vbNullString Then GoTo FindThread
-        If C = "A" Then GoTo AddThread
-        If C = "A1" Then GoTo AddMultiThread
-        If C = "A01" Then GoTo AddMultiThread
-        If C = "R" Then GoTo RmvThread
-        If C = "R0" Then GoTo RmvAllThread
-        If C = "R1" Then GoTo RmvMultiThread
-        If C = "R01" Then GoTo RmvAllThread
+        If M = vbNullString And xArt = vbNullString Then GoTo AddThread
+        If M = vbNullString And xArt <> vbNullString Then GoTo FindThread
+        If M = "A" Then GoTo AddThread
+        If M = "A1" Then GoTo AddMultiThread
+        If M = "A01" Then GoTo AddMultiThread
+        If M = "R" Then GoTo RmvThread
+        If M = "R0" Then GoTo RmvAllThread
+        If M = "R1" Then GoTo RmvMultiThread
+        If M = "R01" Then GoTo RmvAllThread
         
         GoTo ErrMsg
         Exit Function
@@ -263,91 +261,91 @@ RmvAllMedia:
 AddThread:
         '//add single thread
         If xArt <> vbNullString Then xLast = CInt(xArt): GoTo AddMultiThread
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.AddThread_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.AddThreadBtn_Clk")
         Exit Function
         
 AddMultiThread:
         '//add multi thread
-        Call FindForm(xForm)
+        Call fndWindow(xWin)
         For X = 0 To xLast
-        If xForm.PostBox.Value = vbNullString Then xForm.PostBox.Value = "thread" & X
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.AddThread_Clk")
+        If xWin.PostBox.Value = vbNullString Then xWin.PostBox.Value = "thread" & X
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.AddThreadBtn_Clk")
         Next
         Exit Function
 
 RmvThread:
         '//remove single focused thread
         If xArt <> vbNullString Then xLast = CInt(xArt): GoTo RmvMultiThread
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.RmvThread_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.RmvThreadBtn_Clk")
         Exit Function
 
 RmvMultiThread:
         '//remove multi media
         For X = 0 To xLast
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.RmvThread_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.RmvThreadBtn_Clk")
         Next
         Exit Function
         
 RmvAllThread:
         '//remove all threads
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.RmvAllThread_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.RmvAllThreadBtn_Clk")
         Exit Function
         
       
 FindThread:
         '//find & focus thread
-        Call FindForm(xForm)
+        Call fndWindow(xWin)
         X = CInt(xArt)
         Range("ThreadScrollPos").Value = X
-        xForm.ThreadCt.Caption = X
-        xForm.PostBox.Value = Range("PostThread").Offset(X, 0).Value  '//2 parameters
-        If xLast > 1 Then xForm.MedLinkBox.Value = Range("MedThread").Offset(X, 0).Value
+        xWin.ThreadCt.Caption = X
+        xWin.PostBox.Value = Range("PostThread").Offset(X, 0).Value2  '//2 arguments
+        If xLast > 1 Then xWin.MedLinkBox.Value = Range("MedThread").Offset(X, 0).Value2
         Exit Function
         
 NewProfile:
 xArt = Replace(xArt, "mk.", vbNullString)
 Call modArtP(xArt)
 
-'//add multiple users (no parameters)
+'//add multiple users (no arguments)
 '//switches
 If InStr(1, xArt, "-list", vbTextCompare) Then
 xArt = Replace(xArt, "-list", vbNullString, , , vbTextCompare)
 xArtArr = Split(xArt, ",")
 For X = 0 To UBound(xArtArr)
 xInfo = xArtArr(X)
-Call App_CLICK.NewProfile_Clk(xInfo)
+Call eTweetXL_CLICK.NewProfile_Clk(xInfo)
 Next
 Exit Function
 End If
 
 xInfo = xArt
-Call App_CLICK.NewProfile_Clk(xInfo)
+Call eTweetXL_CLICK.NewProfile_Clk(xInfo)
 Exit Function
 
 DelProfile:
 xArt = Replace(xArt, "del.", vbNullString)
 Call modArtP(xArt)
-If InStr(1, xArt, "-f", vbTextCompare) Then xArt = Replace(xArt, "-f", vbNullString, , , vbTextCompare): Range("xlasSilent").Value = 1 '//force deletion no prompt
+If InStr(1, xArt, "-f", vbTextCompare) Then xArt = Replace(xArt, "-f", vbNullString, , , vbTextCompare): Range("xlasSilent").Value2 = 1 '//force deletion no prompt
 If InStr(1, xArt, "*") Then GoTo DelAllProfile '//all switch
 
-'//add multiple users (no parameters)
+'//add multiple users (no arguments)
 '//switches
 If InStr(1, xArt, "-list", vbTextCompare) Then
 xArt = Replace(xArt, "-list", vbNullString, , , vbTextCompare)
 xArtArr = Split(xArt, ",")
 For X = 0 To UBound(xArtArr)
 xInfo = xArtArr(X)
-Call App_CLICK.RmvProfile_Clk(xInfo)
+Call eTweetXL_CLICK.RmvProfileBtn_Clk(xInfo)
 Next
 Exit Function
 End If
 
 xInfo = xArt
-Call App_CLICK.RmvProfile_Clk(xInfo)
+Call eTweetXL_CLICK.RmvProfileBtn_Clk(xInfo)
 Exit Function
 
 DelAllProfile:
-Call App_CLICK.RmvAllProfiles_Clk
+Call eTweetXL_CLICK.RmvAllProfilesBtn_Clk
 Exit Function
 
 
@@ -361,13 +359,13 @@ Exit Function
         '//Add drafts to linker
         ElseIf InStr(1, xArt, "draft(", vbTextCompare) Then
         
-        If InStr(1, xArt, "del.", vbTextCompare) Then C = "D" '//check for delete draft(s)...
-        If InStr(1, xArt, "add.", vbTextCompare) Then C = "A" '//check for add draft(s)...
-        If InStr(1, xArt, "rmv.", vbTextCompare) Then C = "R" '//check for remove draft(s)...
+        If InStr(1, xArt, "del.", vbTextCompare) Then M = "D" '//check for delete draft(s)...
+        If InStr(1, xArt, "add.", vbTextCompare) Then M = "A" '//check for add draft(s)...
+        If InStr(1, xArt, "rmv.", vbTextCompare) Then M = "R" '//check for remove draft(s)...
         '//special characters/wildcards
-        If InStr(1, xArt, "*") Then C = C & "0" '//Check for all...
-        If InStr(1, xArt, ",") Then C = C & "1" '//Check for and...
-        If InStr(1, xArt, ":") Then C = C & "2" '//Check for through...
+        If InStr(1, xArt, "*") Then M = M & "0" '//Check for all...
+        If InStr(1, xArt, ",") Then M = M & "1" '//Check for and...
+        If InStr(1, xArt, ":") Then M = M & "2" '//Check for through...
         
         xArt = Replace(xArt, "add.draft", "", , , vbTextCompare)
         xArt = Replace(xArt, "rmv.draft", "", , , vbTextCompare)
@@ -375,22 +373,22 @@ Exit Function
         xArt = Replace(xArt, "*", vbNullString)
         Call modArtP(xArt)
         
-        If C = "A" Then GoTo AddDraft
-        If C = "A0" Then GoTo AddAllDraft
-        If C = "A1" Then GoTo AddDraft
-        If C = "A2" Then GoTo AddDraft
-        If C = "A01" Then GoTo AddDraft
-        If C = "A02" Then GoTo AddDraft
-        If C = "R" Then GoTo RmvDraft
-        If C = "R0" Then GoTo RmvAllDraft
-        If C = "D" Then GoTo DeleteDraft
-        If C = "D0" Then GoTo DeleteAllDraft
+        If M = "A" Then GoTo AddDraft
+        If M = "A0" Then GoTo AddAllDraft
+        If M = "A1" Then GoTo AddDraft
+        If M = "A2" Then GoTo AddDraft
+        If M = "A01" Then GoTo AddDraft
+        If M = "A02" Then GoTo AddDraft
+        If M = "R" Then GoTo RmvDraft
+        If M = "R0" Then GoTo RmvAllDraft
+        If M = "D" Then GoTo DeleteDraft
+        If M = "D0" Then GoTo DeleteAllDraft
 
 AddDraft:
 xArt = Replace(xArt, """", vbNullString)
 xPos = CDbl(xArt) '//position
 
-        Call App_CLICK.AddLink_Clk(xPos) '//Add runtime
+        Call eTweetXL_CLICK.AddLinkBtn_Clk(xPos) '//Add runtime
         
         Exit Function
         
@@ -400,7 +398,7 @@ AddAllDraft:
         
         For X = 0 To oBox.ListCount - 1
         oBox.Value = oBox.List(X)
-        Call App_CLICK.AddLink_Clk(xPos)
+        Call eTweetXL_CLICK.AddLinkBtn_Clk(xPos)
         Next
         
         Set oBox = Nothing
@@ -415,21 +413,21 @@ RmvDraft:
         
 RmvAllDraft:
         '//Remove all drafts from linker
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.DraftHdr_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.DraftHdr_Clk")
         Exit Function
        
 DeleteDraft:
 '//Delete draft from archive
 If xArt = vbNullString Then
-wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.DeleteDraft_Clk")
+wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.DelDraftBtn_Clk")
     Else
-        ETWEETXLPOST.DraftBox.Value = xArt: wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.DeleteDraft_Clk")
+        ETWEETXLPOST.DraftBox.Value = xArt: wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.DelDraftBtn_Clk")
                 End If
 Exit Function
        
 DeleteAllDraft:
 '//Delete all drafts from archive
-wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.DeleteAllDraft_Clk")
+wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.DelAllDraftBtn_Clk")
 Exit Function
        
 '/\_____________________________________
@@ -444,32 +442,32 @@ UserLink:
         xArt = Replace(xArt, "user(", vbNullString, , , vbTextCompare)
         If InStr(1, xArt, "mk.", vbTextCompare) Then GoTo NewUser '//check for make new user(s)...
         If InStr(1, xArt, "del.", vbTextCompare) Then GoTo DelUser '//check for delete user(s)...
-        If InStr(1, xArt, "add.", vbTextCompare) Then C = "A" '//check for add user(s)...
-        If InStr(1, xArt, "rmv.", vbTextCompare) Then C = "R" '//check for remove user(s)...
+        If InStr(1, xArt, "add.", vbTextCompare) Then M = "A" '//check for add user(s)...
+        If InStr(1, xArt, "rmv.", vbTextCompare) Then M = "R" '//check for remove user(s)...
         '//special characters/wildcards
-        If InStr(1, xArt, "*") Then C = C & "0" '//check for all...
-        If InStr(1, xArt, ",") Then C = C & "1" '//check for and...
-        If InStr(1, xArt, ":") Then C = C & "2" '//check for through...
+        If InStr(1, xArt, "*") Then M = M & "0" '//check for all...
+        If InStr(1, xArt, ",") Then M = M & "1" '//check for and...
+        If InStr(1, xArt, ":") Then M = M & "2" '//check for through...
         
         xArt = Replace(xArt, "add.", vbNullString, , , vbTextCompare)
         xArt = Replace(xArt, "rmv.", vbNullString, , , vbTextCompare)
         xArt = Replace(xArt, "*", vbNullString)
         Call modArtP(xArt)
         
-        If C = "A" Then GoTo AddUser
-        If C = "A0" Then GoTo AddAllUser
-        If C = "A1" Then GoTo AddUser
-        If C = "A2" Then GoTo AddUser
-        If C = "A01" Then GoTo AddUser
-        If C = "A02" Then GoTo AddUser
-        If C = "R" Then GoTo RmvUser
-        If C = "R0" Then GoTo RmvAllUser
+        If M = "A" Then GoTo AddUser
+        If M = "A0" Then GoTo AddAllUser
+        If M = "A1" Then GoTo AddUser
+        If M = "A2" Then GoTo AddUser
+        If M = "A01" Then GoTo AddUser
+        If M = "A02" Then GoTo AddUser
+        If M = "R" Then GoTo RmvUser
+        If M = "R0" Then GoTo RmvAllUser
 
 AddUser:
 Call modArtQ(xArt)
 xPos = CDbl(xArt) '//position
 
-        Call App_CLICK.AddUser_Clk(xPos) '//Add runtime
+        Call eTweetXL_CLICK.AddUserBtn_Clk(xPos) '//Add runtime
         
         Exit Function
         
@@ -483,7 +481,7 @@ xPos = 0
         
         For X = 0 To x1
         oBox.Value = oBox.List(X)
-        Call App_CLICK.AddUser_Clk(xPos)
+        Call eTweetXL_CLICK.AddUserBtn_Clk(xPos)
         Next
         
         Set oBox = Nothing
@@ -498,7 +496,7 @@ RmvUser:
         
 RmvAllUser:
         '//Remove all users from linker
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.UserHdr_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.UserHdr_Clk")
         Exit Function
     
 DelUser:
@@ -507,24 +505,24 @@ Call modArtP(xArt)
 '//special characters/wildcards
 If InStr(1, xArt, "*") Then GoTo DelAllUser
 '//switches
-If InStr(1, xArt, "-f", vbTextCompare) Then xArt = Replace(xArt, "-f", vbNullString, , , vbTextCompare): Range("xlasSilent").Value = 1 '//force deletion no prompt
-'//add multiple users (no parameters)
+If InStr(1, xArt, "-f", vbTextCompare) Then xArt = Replace(xArt, "-f", vbNullString, , , vbTextCompare): Range("xlasSilent").Value2 = 1 '//force deletion no prompt
+'//add multiple users (no arguments)
 If InStr(1, xArt, "-list", vbTextCompare) Then
 xArt = Replace(xArt, "-list", vbNullString, , , vbTextCompare)
 xArtArr = Split(xArt, ",")
 For X = 0 To UBound(xArtArr)
 xInfo = xArtArr(X)
-Call App_CLICK.DelUser_Clk(xInfo)
+Call eTweetXL_CLICK.DelUserBtn_Clk(xInfo)
 Next
 Exit Function
 End If
 
 xInfo = xArt
-Call App_CLICK.DelUser_Clk(xInfo)
+Call eTweetXL_CLICK.DelUserBtn_Clk(xInfo)
 Exit Function
 
 DelAllUser:
-Call App_CLICK.DelAllUsers_Clk
+Call eTweetXL_CLICK.DelAllUsersBtn_Clk
 Exit Function
 
     
@@ -532,21 +530,21 @@ NewUser:
 xArt = Replace(xArt, "mk.", "", , , vbTextCompare)
 Call modArtP(xArt)
 
-'//add multiple users (no parameters)
+'//add multiple users (no arguments)
 '//switches
 If InStr(1, xArt, "-list", vbTextCompare) Then
 xArt = Replace(xArt, "-list", vbNullString, , , vbTextCompare)
 xArtArr = Split(xArt, ",")
 For X = 0 To UBound(xArtArr)
 xInfo = xArtArr(X)
-Call App_CLICK.NewUser_Clk(xInfo)
+Call eTweetXL_CLICK.NewUser_Clk(xInfo)
 Next
 Exit Function
 End If
 
 '//add single user w/ or w/o parameter(s)
     xInfo = xArt
-    Call App_CLICK.NewUser_Clk(xInfo)
+    Call eTweetXL_CLICK.NewUser_Clk(xInfo)
     Exit Function
 
     
@@ -559,51 +557,51 @@ End If
         '//Add runtime to Linker
         ElseIf InStr(1, xArt, "time(", vbTextCompare) Then
             
-            If InStr(1, xArt, "add.", vbTextCompare) Then C = "A" '//check for add time...
-            If InStr(1, xArt, "rmv.", vbTextCompare) Then C = "R" '//check for remove time...
+            If InStr(1, xArt, "add.", vbTextCompare) Then M = "A" '//check for add time...
+            If InStr(1, xArt, "rmv.", vbTextCompare) Then M = "R" '//check for remove time...
             '//special characters/wildcards
-            If InStr(1, xArt, "*") Then C = C & "0" '//check for all...
-            If InStr(1, xArt, ",") Then C = C & "1" '//check for and...
-            If InStr(1, xArt, ":") Then C = C & "2" '//check for through...
+            If InStr(1, xArt, "*") Then M = M & "0" '//check for all...
+            If InStr(1, xArt, ",") Then M = M & "1" '//check for and...
+            If InStr(1, xArt, ":") Then M = M & "2" '//check for through...
             
             xArt = Replace(xArt, "add.time", "", , , vbTextCompare)
             xArt = Replace(xArt, "rmv.time", "", , , vbTextCompare)
             xArt = Replace(xArt, "*", vbNullString)
             Call modArtP(xArt)
         
-            If InStr(1, C, "A") Or InStr(1, C, "R") = False Then GoTo AddTimeDirect
+            If InStr(1, M, "A") Or InStr(1, M, "R") = False Then GoTo AddTimeDirect
             
             If InStr(1, xArt, "h", vbTextCompare) Then
             xArtArr = Split(xArt, "h", , vbTextCompare)
             Offset = "H"
-            xTimes = xArtArr(0)
+            xCount = xArtArr(0)
                 End If
             If InStr(1, xArt, "m", vbTextCompare) Then
             xArtArr = Split(xArt, "m", , vbTextCompare)
             Offset = "M"
-            xTimes = xArtArr(0)
+            xCount = xArtArr(0)
                 End If
             If InStr(1, xArt, "s", vbTextCompare) Then
             xArtArr = Split(xArt, "s", , vbTextCompare)
             Offset = "S"
-            xTimes = xArtArr(0)
+            xCount = xArtArr(0)
                 End If
             
-            xTimes = Replace(xTimes, """", vbullstring)
+            xCount = Replace(xCount, """", vbullstring)
             
-            If C = "A" & Offset = vbNullString Then '//add time once w/o offset
+            If M = "A" & Offset = vbNullString Then '//add time once w/o offset
             GoTo AddTimeOnce
-                ElseIf C = "A" Then '//add time once w/ offset
+                ElseIf M = "A" Then '//add time once w/ offset
                     GoTo AddTime
                         End If
                
-            If C = "A0" Then GoTo AddTime
-            If C = "A1" Then GoTo AddTime
-            If C = "A2" Then GoTo AddTime
-            If C = "A01" Then GoTo AddTime
-            If C = "A02" Then GoTo AddTime
-            If C = "R" Then GoTo RmvTime
-            If C = "R0" Then GoTo RmvAllTime
+            If M = "A0" Then GoTo AddTime
+            If M = "A1" Then GoTo AddTime
+            If M = "A2" Then GoTo AddTime
+            If M = "A01" Then GoTo AddTime
+            If M = "A02" Then GoTo AddTime
+            If M = "R" Then GoTo RmvTime
+            If M = "R0" Then GoTo RmvAllTime
                          
             Exit Function
             
@@ -611,16 +609,16 @@ AddTimeDirect:
 Call modArtQ(xArt)
 xPos = 0
 ETWEETXLPOST.TimeBox.Value = xArt
-Call App_CLICK.AddRuntime_Clk(xPos)
+Call eTweetXL_CLICK.AddRuntimeBtn_Clk(xPos)
 Exit Function
 
 AddTimeOnce:
 Call modArtQ(xArt)
 xPos = CDbl(xArt) '//position
 
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.TimerHdr_Clk") '//refresh current time
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.TimerHdr_Clk") '//refresh current time
         
-        Call App_CLICK.AddRuntime_Clk(xPos) '//add runtime
+        Call eTweetXL_CLICK.AddRuntimeBtn_Clk(xPos) '//add runtime
         
         Exit Function
 
@@ -629,7 +627,7 @@ AddTime:
 Call modArtQ(xArt)
 If xArtArr(0) = vbNullString Then xPos = CDbl(xArt) Else xPos = xArtArr(0) '//position
  
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.TimerHdr_Clk") '//refresh current time
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.TimerHdr_Clk") '//refresh current time
         
         x1 = ETWEETXLPOST.LinkerBox.ListCount - ETWEETXLPOST.RuntimeBox.ListCount
         x1 = x1 - 1
@@ -638,32 +636,32 @@ If xArtArr(0) = vbNullString Then xPos = CDbl(xArt) Else xPos = xArtArr(0) '//po
         For X = 0 To x1
 
         If Offset = "S" Then '//seconds
-            If xTimes > 0 Then
-            Call App_CLICK.UpSecBtn_Clk(xTimes): xPos = 0
+            If xCount > 0 Then
+            Call eTweetXL_CLICK.UpSecBtn_Clk(xCount): xPos = 0
                 Else
-                    Call App_CLICK.DwnSecBtn_Clk(xTimes): xPos = 0
+                    Call eTweetXL_CLICK.DwnSecBtn_Clk(xCount): xPos = 0
                     End If
                         End If
             
        If Offset = "M" Then '//minutes
-            If xTimes > 0 Then
-            Call App_CLICK.UpMinBtn_Clk(xTimes): xPos = 0
+            If xCount > 0 Then
+            Call eTweetXL_CLICK.UpMinBtn_Clk(xCount): xPos = 0
                 Else
-                    Call App_CLICK.DwnMinBtn_Clk(xTimes): xPos = 0
+                    Call eTweetXL_CLICK.DwnMinBtn_Clk(xCount): xPos = 0
                     End If
                         End If
          
        
        If Offset = "H" Then '//hours
-            If xTimes > 0 Then
-            Call App_CLICK.UpHrBtn_Clk(xTimes): xPos = 0
+            If xCount > 0 Then
+            Call eTweetXL_CLICK.UpHrBtn_Clk(xCount): xPos = 0
                 Else
-                    Call App_CLICK.DwnHrBtn_Clk(xTimes): xPos = 0
+                    Call eTweetXL_CLICK.DwnHrBtn_Clk(xCount): xPos = 0
                     End If
                         End If
                               
             
-        Call App_CLICK.AddRuntime_Clk(xPos) '//ADD RUNTIME
+        Call eTweetXL_CLICK.AddRuntimeBtn_Clk(xPos) '//ADD RUNTIME
         
         If xPos = 0 Then xPos = vbNullString
         
@@ -680,9 +678,53 @@ RmvTime:
                         
 RmvAllTime:
         '//Remove all time from runtime
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.LinkerHdr_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.LinkerHdr_Clk")
         Exit Function
        
+        
+'/\_____________________________________
+'//
+'//         WINFORM ARTICLES
+'/\_____________________________________
+'//
+'//Output current window number...
+ElseIf InStr(1, xArt, "me()", vbTextCompare) And Len(xArt) <= 4 Then MsgBox (Range("xlasWinForm").Value2): Exit Function
+
+    '//Set window number...
+        ElseIf InStr(1, xArt, "winform(", vbTextCompare) Then
+        
+    '//switches
+        If InStr(1, xArt, "-last", vbTextCompare) Then _
+        Workbooks(appEnv).Worksheets(appBlk).Range("xlasWinForm").Value2 = _
+        Workbooks(appEnv).Worksheets(appBlk).Range("xlasWinFormLast").Value2: Exit Function       '//set to last window
+        
+        xArt = Replace(xArt, "winform(", "", , , vbTextCompare)
+        Call modArtP(xArt): Call modArtQ(xArt)
+        
+        Call xlAppScript_lex.fndChar(xArt)
+        If xArt = "(*Err)" Then Exit Function
+        
+        Workbooks(appEnv).Worksheets(appBlk).Range("xlasWinForm").Value2 = xArt
+        
+        Exit Function
+        
+'//Show application windows...
+ElseIf InStr(1, xArt, "sh.home", vbTextCompare) Or InStr(1, xArt, "home()", vbTextCompare) Then ETWEETXLHOME.Show: Exit Function
+ElseIf InStr(1, xArt, "sh.setup", vbTextCompare) Or xArt = "setup()" Then ETWEETXLSETUP.Show: Exit Function
+ElseIf InStr(1, xArt, "sh.post", vbTextCompare) Or xArt = "post()" Then ETWEETXLPOST.Show: Exit Function
+ElseIf InStr(1, xArt, "sh.queue", vbTextCompare) Or xArt = "queue()" Then ETWEETXLQUEUE.Show: Exit Function
+ElseIf InStr(1, xArt, "sh.apisetup", vbTextCompare) Or xArt = "apisetup()" Then ETWEETXLAPISETUP.Show: Exit Function
+ElseIf InStr(1, xArt, "sh.me", vbTextCompare) Then Call fndWindow(xWin): xWin.Show: Exit Function
+'//Hide application windows...
+ElseIf InStr(1, xArt, "hd.home", vbTextCompare) Then ETWEETXLHOME.Hide: Exit Function
+ElseIf InStr(1, xArt, "hd.setup", vbTextCompare) Then ETWEETXLSETUP.Hide: Exit Function
+ElseIf InStr(1, xArt, "hd.post", vbTextCompare) Then ETWEETXLPOST.Hide: Exit Function
+ElseIf InStr(1, xArt, "hd.queue", vbTextCompare) Then ETWEETXLQUEUE.Hide: Exit Function
+ElseIf InStr(1, xArt, "hd.apisetup", vbTextCompare) Then ETWEETXLAPISETUP.Hide: Exit Function
+ElseIf InStr(1, xArt, "hd.me", vbTextCompare) Then Call fndWindow(xWin): xWin.Hide: Exit Function
+Exit Function
+
+End If '//end
 
 '/\_____________________________________________
 '//
@@ -693,16 +735,16 @@ RmvAllTime:
 ADALink:
 
     '//Start application
-        ElseIf InStr(1, xArt, "start(", vbTextCompare) Then
+        If InStr(1, xArt, "start(", vbTextCompare) Then
         If InStr(1, xArt, "app.", vbTextCompare) Or InStr(1, xArt, "start()", vbTextCompare) Then
-        wbMacro = "App_CLICK.Start_Clk"
+        wbMacro = "eTweetXL_CLICK.StartBtn_Clk"
         Workbooks(appEnv).Application.Run "'" & appEnv & "'!" & wbMacro: End If
         Exit Function
         
     '//Break application
         ElseIf InStr(1, xArt, "break(", vbTextCompare) Then
         If InStr(1, xArt, "app.", vbTextCompare) Or InStr(1, xArt, "break()", vbTextCompare) Then
-        wbMacro = "App_CLICK.Break_Clk"
+        wbMacro = "eTweetXL_CLICK.BreakBtn_Clk"
         Workbooks(appEnv).Application.Run "'" & appEnv & "'!" & wbMacro: End If
         Exit Function
         
@@ -712,7 +754,7 @@ ADALink:
         xArt = Replace(xArt, "dfilter(", vbNullString, , , vbTextCompare)
         Call modArtP(xArt): Call modArtQ(xArt)
         xFil = CByte(xArt)
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.DraftFilterBtn_Clk", (xFil))
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.DraftFilterBtn_Clk", (xFil))
         Exit Function
         
     '//Set dynamic offset
@@ -721,7 +763,7 @@ ADALink:
         xArt = Replace(xArt, "dynoffset(", vbNullString, , , vbTextCompare)
         Call modArtP(xArt): Call modArtQ(xArt)
         xPos = xArt
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.DynOffset_Clk", (xPos))
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.DynOffset_Clk", (xPos))
         Exit Function
         
     '//Freeze/unfreeze application
@@ -729,9 +771,9 @@ ADALink:
         xArt = Replace(xArt, "app.", vbNullString, , , vbTextCompare)
         xArt = Replace(xArt, "freeze(", vbNullString, , , vbTextCompare)
         Call modArtP(xArt): Call modArtQ(xArt)
-        If xArt = 0 Then Range("AppActive").Value = 1
-        If xArt = 1 Then Range("AppActive").Value = 2
-        wbMacro = "App_CLICK.FreezeBtn_Clk"
+        If xArt = 0 Then Range("AppState").Value2 = 1
+        If xArt = 1 Then Range("AppState").Value2 = 2
+        wbMacro = "eTweetXL_CLICK.FreezeBtn_Clk"
         Workbooks(appEnv).Application.Run "'" & appEnv & "'!" & wbMacro
         Exit Function
         
@@ -740,10 +782,15 @@ ADALink:
         xArt = Replace(xArt, "app.", vbNullString, , , vbTextCompare)
         xArt = Replace(xArt, "help(", vbNullString, , , vbTextCompare)
         Call modArtP(xArt): Call modArtQ(xArt)
-        If xArt = 0 Then Range("HelpActive").Value = 0
-        If xArt = 1 Then Range("HelpActive").Value = 1
+        If xArt = 0 Then Range("HelpStatus").Value2 = 0
+        If xArt = 1 Then Range("HelpStatus").Value2 = 1
         xPos = xArt
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.HelpStatus_Clk", (xPos))
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.HelpStatusBtn_Clk", (xPos))
+        Exit Function
+    
+    '//Hide application
+        ElseIf InStr(1, xArt, "app.hide(", vbTextCompare) Or InStr(1, xArt, "hide(", vbTextCompare) Then
+        Call eTweetXL_CLICK.HideBtn_Clk
         Exit Function
         
     '//Load a designated link
@@ -753,7 +800,7 @@ ADALink:
         If InStr(1, xArt, "-last", vbTextCompare) Then
         '//Reload last connected link
         xLink = AppLoc & "\mtsett\lastlink.tmp"
-        Call App_IMPORT.MyLink(xLink)
+        Call eTweetXL_GET.getLink(xLink)
         Exit Function
         End If
         
@@ -765,11 +812,11 @@ ADALink:
         xLink = xArt
         
         If xLink <> vbNullString Then
-        Call App_IMPORT.MyLink(xLink)
+        Call eTweetXL_GET.getLink(xLink)
         Else
         '//Reload last imported link
         xLink = Range("RemLink").Value
-        Call App_IMPORT.MyLink(xLink)
+        Call eTweetXL_GET.getLink(xLink)
         End If
         Exit Function
 
@@ -778,7 +825,7 @@ LoadMultiLink:
         
         For X = 0 To UBound(xArtArr)
         xLink = xArtArr(X)
-        Call App_IMPORT.MyLink(xLink)
+        Call eTweetXL_GET.getLink(xLink)
         Next
         Exit Function
 
@@ -796,12 +843,12 @@ LoadMultiLink:
         xArt = Replace(xArt, "sendapi(", vbNullString, , , vbTextCompare)
         Call modArtP(xArt): Call modArtQ(xArt)
         xPos = xArt
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.SendAPI_Clk", (xPos))
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.SendAPI_Clk", (xPos))
         Exit Function
         
     '//Connect Linker
         ElseIf InStr(1, xArt, "app.connect(", vbTextCompare) Or InStr(1, xArt, "connect()", vbTextCompare) Then
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.ConnectPost_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.ConnectBtn_Clk")
         Exit Function
         
     '//Clear application window
@@ -811,16 +858,16 @@ LoadMultiLink:
         Call modArtP(xArt): Call modArtQ(xArt)
         
         '//special characters/wildcards
-        If xArt = "*" Then Call App_CLICK.ClrSetup_Clk: Exit Function      '//clear post/tweet setup & Linker
+        If xArt = "*" Then Call eTweetXL_CLICK.ClrSetupBtn_Clk: Exit Function      '//clear post/tweet setup & Linker
         '//switches
-        If InStr(1, xArt, "-draft", vbTextCompare) Then Call App_CLICK.DraftHdr_Clk: Exit Function      '//clear draft link
-        If InStr(1, xArt, "-linker", vbTextCompare) Then Call App_CLICK.LinkerHdr_Clk: Exit Function      '//clear Linker
-        If InStr(1, xArt, "-post", vbTextCompare) Then Call App_CLICK.PostHdr_Clk: Exit Function      '//clear draft link
-        If InStr(1, xArt, "-runtime", vbTextCompare) Then Call App_CLICK.RuntimeHdr_Clk: Exit Function      '//clear time link
-        If InStr(1, xArt, "-user", vbTextCompare) Then Call App_CLICK.UserHdr_Clk: Exit Function      '//clear user link
+        If InStr(1, xArt, "-draft", vbTextCompare) Then Call eTweetXL_CLICK.DraftHdr_Clk: Exit Function      '//clear draft link
+        If InStr(1, xArt, "-linker", vbTextCompare) Then Call eTweetXL_CLICK.LinkerHdr_Clk: Exit Function      '//clear Linker
+        If InStr(1, xArt, "-post", vbTextCompare) Then Call eTweetXL_CLICK.PostHdr_Clk: Exit Function      '//clear draft link
+        If InStr(1, xArt, "-runtime", vbTextCompare) Then Call eTweetXL_CLICK.RuntimeHdr_Clk: Exit Function      '//clear time link
+        If InStr(1, xArt, "-user", vbTextCompare) Then Call eTweetXL_CLICK.UserHdr_Clk: Exit Function      '//clear user link
         
         '//default no parameter
-        Call App_CLICK.ClrSetup_Clk
+        Call eTweetXL_CLICK.ClrSetupBtn_Clk
         Exit Function
         
         
@@ -918,62 +965,23 @@ LoadMultiLink:
     
     '//Save current post
         ElseIf InStr(1, xArt, "app.save.post", vbTextCompare) Or InStr(1, xArt, "save.post", vbTextCompare) Then
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.SavePost_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.SavePostBtn_Clk")
         Exit Function
         
     '//Save linker state
         ElseIf InStr(1, xArt, "app.save.linker", vbTextCompare) Or InStr(1, xArt, "save.linker", vbTextCompare) Then
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.SaveLinkerBtn_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.SaveLinkerBtn_Clk")
         Exit Function
         
     '//View instanced media
         ElseIf InStr(1, xArt, "app.view.media", vbTextCompare) Or InStr(1, xArt, "view.media", vbTextCompare) Then
-        wbMacro = Workbooks(appEnv).Application.Run("App_CLICK.ViewMedBtn_Clk")
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.ViewMedBtn_Clk")
         Exit Function
         
-'/\_____________________________________
-'//
-'//         WINFORM ARTICLES
-'/\_____________________________________
-'//
-'//Output current window number...
-ElseIf InStr(1, xArt, "me()", vbTextCompare) And Len(xArt) <= 4 Then MsgBox (Range("xlasWinForm").Value): Exit Function
-
-    '//Set window number...
-        ElseIf InStr(1, xArt, "winform(", vbTextCompare) Then
+        End If '//ADA end
         
-    '//switches
-        If InStr(1, xArt, "-last", vbTextCompare) Then _
-        Workbooks(appEnv).Worksheets(appBlk).Range("xlasWinForm").Value = _
-        Workbooks(appEnv).Worksheets(appBlk).Range("xlasWinFormLast").Value: Exit Function       '//set to last window
-        
-        xArt = Replace(xArt, "winform(", "", , , vbTextCompare)
-        Call modArtP(xArt): Call modArtQ(xArt)
-        
-        Call xlAppScript_lex.findChar(xArt)
-        If xArt = "(*Err)" Then Exit Function
-        
-        Workbooks(appEnv).Worksheets(appBlk).Range("xlasWinForm").Value = xArt
-        
-        Exit Function
-        
-'//Show application windows...
-ElseIf InStr(1, xArt, "sh.home", vbTextCompare) Or InStr(1, xArt, "home()", vbTextCompare) Then ETWEETXLHOME.Show: Exit Function
-ElseIf InStr(1, xArt, "sh.setup", vbTextCompare) Or xArt = "setup()" Then ETWEETXLSETUP.Show: Exit Function
-ElseIf InStr(1, xArt, "sh.post", vbTextCompare) Or xArt = "post()" Then ETWEETXLPOST.Show: Exit Function
-ElseIf InStr(1, xArt, "sh.queue", vbTextCompare) Or xArt = "queue()" Then ETWEETXLQUEUE.Show: Exit Function
-ElseIf InStr(1, xArt, "sh.apisetup", vbTextCompare) Or xArt = "apisetup()" Then ETWEETXLAPISETUP.Show: Exit Function
-ElseIf InStr(1, xArt, "sh.me", vbTextCompare) Then Call App_TOOLS.FindForm(xForm): xForm.Show: Exit Function
-'//Hide application windows...
-ElseIf InStr(1, xArt, "hd.home", vbTextCompare) Then ETWEETXLHOME.Hide: Exit Function
-ElseIf InStr(1, xArt, "hd.setup", vbTextCompare) Then ETWEETXLSETUP.Hide: Exit Function
-ElseIf InStr(1, xArt, "hd.post", vbTextCompare) Then ETWEETXLPOST.Hide: Exit Function
-ElseIf InStr(1, xArt, "hd.queue", vbTextCompare) Then ETWEETXLQUEUE.Hide: Exit Function
-ElseIf InStr(1, xArt, "hd.apisetup", vbTextCompare) Then ETWEETXLAPISETUP.Hide: Exit Function
-ElseIf InStr(1, xArt, "hd.me", vbTextCompare) Then Call App_TOOLS.FindForm(xForm): xForm.Hide: Exit Function
-Exit Function
-
-End If '//end
+'//nothing found
+errLvl = 1
 
 ErrMsg:
 '//Article not found...
@@ -990,7 +998,7 @@ Private Function libFlag$(xArt, errLvl As Byte)
 
 On Error GoTo ErrMsg
 
-Call findEnvironment(appEnv, appBlk)
+Call fndEnvironment(appEnv, appBlk)
 
         '//Run script silently (ignore any application messages)
         If InStr(1, xArt, "--s", vbTextCompare) Then
@@ -1044,8 +1052,36 @@ End Function
 '/\_________________________________________________________________________________________________________________________
 '
 '
+' Version: 1.0.5
+'
+'
+' [ Date 6/6/2022 ]
+'
+' (1): Added "app.hide()" article for hiding the entire application
+'
+' (2): Fixed an issue where "ADA" articles couldn't be found b/c of there placement in the library
+'
+'
+' [ Date 5/12/2022 ]
+'
+' (1): Associating names/syntax for xlAppScript parameters are now ".param" & modifiers "mod."
+'
+' Changes to variables/titling were made to reflect. Various application functions were also renamed.
+'
+'
+' [ Date 5/9/2022 ]
+'
+' (1): Fixed issue w/ "errLvl" variable causing error b/c of mismatch in data types
+'
+'
+' [ Date 5/5/2022 ]
+'
+' (1): Various library optimizations (mainly dealing w/ variables)
+'
 '
 ' Version: 1.0.4
+'
+'
 '
 ' [ Date 3/27/2022 ]
 '
