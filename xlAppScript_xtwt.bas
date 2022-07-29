@@ -3,7 +3,7 @@ Public Function runLib$(xArt)
 '/\____________________________________________________________________________________________________________________________
 '//
 '//       xtwt Library
-'//         Version: 1.0.5
+'//         Version: 1.0.6
 '/\_____________________________________________________________________________________________________________________________
 '//
 '//     License Information:
@@ -34,7 +34,7 @@ Public Function runLib$(xArt)
 '//                             (previous versions not tested &/or unsupported)
 '/\____________________________________________________________________________________________________________________________
 '//
-'//     Latest Revision: 6/6/2022
+'//     Latest Revision: 7/26/2022
 '/\____________________________________________________________________________________________________________________________
 '//
 '//     Developer(s): anz7re
@@ -54,7 +54,7 @@ Public Function runLib$(xArt)
         Call modArtQ(xArt)
             
         '//Find application environment & block
-        Call fndEnvironment(appEnv, appBlk)
+        Call getEnvironment(appEnv, appBlk)
         
         '//Find flags
         If InStr(1, xArt, "--") Or InStr(1, xArt, "++") Then _
@@ -82,7 +82,7 @@ Public Function runLib$(xArt)
         If InStr(1, xArt, "del.") Then GoTo DelProfile '//check for delete profile...
         If InStr(1, xArt, "mk.") Then GoTo NewProfile '//check for make new profile...
         
-        Call fndWindow(xWin)
+        Call getWindow(xWin)
         xWin.ProfileListBox.Value = xArt
         Workbooks(appEnv).Worksheets(appBlk).Range("Profile").Value2 = xArt
         Exit Function
@@ -99,14 +99,14 @@ Public Function runLib$(xArt)
         Call modArtP(xArt): Call modArtQ(xArt)
         xUser = xArt
         Workbooks(appEnv).Worksheets(appBlk).Range("User").Value2 = xUser
-        Call fndWindow(xWin)
+        Call getWindow(xWin)
         xWin.UserListBox.Value = xUser
         Call eTweetXL_CLICK.SetActive_Clk(xUser)
         Exit Function
 
 
         '//Add post info
-        ElseIf InStr(1, xArt, "post(", vbTextCompare) Then
+        ElseIf InStr(1, xArt, "post(", vbTextCompare) And InStr(1, xArt, ".post(", vbTextCompare) = False Then
         xArt = Replace(xArt, "post(", vbNullString, , , vbTextCompare)
         Call modArtP(xArt): Call modArtQ(xArt)
         
@@ -118,13 +118,13 @@ Public Function runLib$(xArt)
         '//switches
         If InStr(1, xArtArr(1), "-true", vbTextCompare) Or InStr(1, xArtArr(1), "1") Then S = "T"
         If InStr(1, xArtArr(1), "-false", vbTextCompare) Or InStr(1, xArtArr(1), "0") Then S = "F"
-        Call fndWindow(xWin)
+        Call getWindow(xWin)
         xWin.PostBox.Value = xWin.PostBox.Value & xArtArr(0)
         If S = "T" Then Call eTweetXL_CLICK.SavePostBtn_Clk
         Exit Function
         End If
         
-        Call fndWindow(xWin)
+        Call getWindow(xWin)
         xWin.PostBox.Value = xWin.PostBox.Value & xArt
         Exit Function
         
@@ -266,7 +266,7 @@ AddThread:
         
 AddMultiThread:
         '//add multi thread
-        Call fndWindow(xWin)
+        Call getWindow(xWin)
         For X = 0 To xLast
         If xWin.PostBox.Value = vbNullString Then xWin.PostBox.Value = "thread" & X
         wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.AddThreadBtn_Clk")
@@ -294,7 +294,7 @@ RmvAllThread:
       
 FindThread:
         '//find & focus thread
-        Call fndWindow(xWin)
+        Call getWindow(xWin)
         X = CInt(xArt)
         Range("ThreadScrollPos").Value = X
         xWin.ThreadCt.Caption = X
@@ -701,7 +701,7 @@ ElseIf InStr(1, xArt, "me()", vbTextCompare) And Len(xArt) <= 4 Then MsgBox (Ran
         xArt = Replace(xArt, "winform(", "", , , vbTextCompare)
         Call modArtP(xArt): Call modArtQ(xArt)
         
-        Call xlAppScript_lex.fndChar(xArt)
+        Call xlAppScript_lex.getChar(xArt)
         If xArt = "(*Err)" Then Exit Function
         
         Workbooks(appEnv).Worksheets(appBlk).Range("xlasWinForm").Value2 = xArt
@@ -709,19 +709,19 @@ ElseIf InStr(1, xArt, "me()", vbTextCompare) And Len(xArt) <= 4 Then MsgBox (Ran
         Exit Function
         
 '//Show application windows...
-ElseIf InStr(1, xArt, "sh.home", vbTextCompare) Or InStr(1, xArt, "home()", vbTextCompare) Then ETWEETXLHOME.Show: Exit Function
-ElseIf InStr(1, xArt, "sh.setup", vbTextCompare) Or xArt = "setup()" Then ETWEETXLSETUP.Show: Exit Function
-ElseIf InStr(1, xArt, "sh.post", vbTextCompare) Or xArt = "post()" Then ETWEETXLPOST.Show: Exit Function
-ElseIf InStr(1, xArt, "sh.queue", vbTextCompare) Or xArt = "queue()" Then ETWEETXLQUEUE.Show: Exit Function
-ElseIf InStr(1, xArt, "sh.apisetup", vbTextCompare) Or xArt = "apisetup()" Then ETWEETXLAPISETUP.Show: Exit Function
-ElseIf InStr(1, xArt, "sh.me", vbTextCompare) Then Call fndWindow(xWin): xWin.Show: Exit Function
+ElseIf InStr(1, xArt, "show.home", vbTextCompare) Or InStr(1, xArt, "home()", vbTextCompare) Then ETWEETXLHOME.Show: Exit Function
+ElseIf InStr(1, xArt, "show.setup", vbTextCompare) Or xArt = "setup()" Then ETWEETXLSETUP.Show: Exit Function
+ElseIf InStr(1, xArt, "show.post", vbTextCompare) Or xArt = "post()" Then ETWEETXLPOST.Show: Exit Function
+ElseIf InStr(1, xArt, "show.queue", vbTextCompare) Or xArt = "queue()" Then ETWEETXLQUEUE.Show: Exit Function
+ElseIf InStr(1, xArt, "show.apisetup", vbTextCompare) Or xArt = "apisetup()" Then ETWEETXLAPISETUP.Show: Exit Function
+ElseIf InStr(1, xArt, "show.me", vbTextCompare) Then Call getWindow(xWin): xWin.Show: Exit Function
 '//Hide application windows...
-ElseIf InStr(1, xArt, "hd.home", vbTextCompare) Then ETWEETXLHOME.Hide: Exit Function
-ElseIf InStr(1, xArt, "hd.setup", vbTextCompare) Then ETWEETXLSETUP.Hide: Exit Function
-ElseIf InStr(1, xArt, "hd.post", vbTextCompare) Then ETWEETXLPOST.Hide: Exit Function
-ElseIf InStr(1, xArt, "hd.queue", vbTextCompare) Then ETWEETXLQUEUE.Hide: Exit Function
-ElseIf InStr(1, xArt, "hd.apisetup", vbTextCompare) Then ETWEETXLAPISETUP.Hide: Exit Function
-ElseIf InStr(1, xArt, "hd.me", vbTextCompare) Then Call fndWindow(xWin): xWin.Hide: Exit Function
+ElseIf InStr(1, xArt, "hide.home", vbTextCompare) Then ETWEETXLHOME.Hide: Exit Function
+ElseIf InStr(1, xArt, "hide.setup", vbTextCompare) Then ETWEETXLSETUP.Hide: Exit Function
+ElseIf InStr(1, xArt, "hide.post", vbTextCompare) Then ETWEETXLPOST.Hide: Exit Function
+ElseIf InStr(1, xArt, "hide.queue", vbTextCompare) Then ETWEETXLQUEUE.Hide: Exit Function
+ElseIf InStr(1, xArt, "hide.apisetup", vbTextCompare) Then ETWEETXLAPISETUP.Hide: Exit Function
+ElseIf InStr(1, xArt, "hide.me", vbTextCompare) Then Call getWindow(xWin): xWin.Hide: Exit Function
 Exit Function
 
 End If '//end
@@ -736,16 +736,21 @@ ADALink:
 
     '//Start application
         If InStr(1, xArt, "start(", vbTextCompare) Then
-        If InStr(1, xArt, "app.", vbTextCompare) Or InStr(1, xArt, "start()", vbTextCompare) Then
+        If InStr(1, xArt, "app.", vbTextCompare) Or InStr(1, xArt, "start(", vbTextCompare) Then
         wbMacro = "eTweetXL_CLICK.StartBtn_Clk"
         Workbooks(appEnv).Application.Run "'" & appEnv & "'!" & wbMacro: End If
         Exit Function
         
     '//Break application
         ElseIf InStr(1, xArt, "break(", vbTextCompare) Then
-        If InStr(1, xArt, "app.", vbTextCompare) Or InStr(1, xArt, "break()", vbTextCompare) Then
+        If InStr(1, xArt, "app.", vbTextCompare) Or InStr(1, xArt, "break(", vbTextCompare) Then
         wbMacro = "eTweetXL_CLICK.BreakBtn_Clk"
         Workbooks(appEnv).Application.Run "'" & appEnv & "'!" & wbMacro: End If
+        Exit Function
+        
+    '//Connect Linker
+        ElseIf InStr(1, xArt, "app.connect(", vbTextCompare) Or InStr(1, xArt, "connect(", vbTextCompare) Then
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.ConnectBtn_Clk")
         Exit Function
         
     '//Set draft filter (single/threaded)
@@ -791,6 +796,21 @@ ADALink:
     '//Hide application
         ElseIf InStr(1, xArt, "app.hide(", vbTextCompare) Or InStr(1, xArt, "hide(", vbTextCompare) Then
         Call eTweetXL_CLICK.HideBtn_Clk
+        Exit Function
+    
+    '//Create a post from a loaded text file
+        ElseIf InStr(1, xArt, "app.load.post(", vbTextCompare) Or InStr(1, xArt, "load.post(", vbTextCompare) Then
+        xArt = Replace(xArt, "app.load.post(", vbNullString, , , vbTextCompare)
+        xArt = Replace(xArt, "app.", vbNullString, , , vbTextCompare)
+        xArt = Replace(xArt, "load.post(", vbNullString, , , vbTextCompare)
+        Call modArtP(xArt): Call modArtQ(xArt)
+        If InStr(1, xArt, ",") Then
+        xArtArr = Split(xArt, ",")
+        '//2 arguments
+        If UBound(xArtArr) = 1 Then xName = xArtArr(0): xPath = xArtArr(1): xPath = Trim(xPath): Call eTweetXL_CLICK.LoadPostBtn_Clk(xName, xPath): Exit Function
+        End If
+        '//1 argument
+        xPath = xArt: xPath = Trim(xPath): Call eTweetXL_CLICK.LoadPostBtn_Clk(xName, xPath)
         Exit Function
         
     '//Load a designated link
@@ -846,11 +866,6 @@ LoadMultiLink:
         wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.SendAPI_Clk", (xPos))
         Exit Function
         
-    '//Connect Linker
-        ElseIf InStr(1, xArt, "app.connect(", vbTextCompare) Or InStr(1, xArt, "connect()", vbTextCompare) Then
-        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.ConnectBtn_Clk")
-        Exit Function
-        
     '//Clear application window
         ElseIf InStr(1, xArt, "app.clr(", vbTextCompare) Or InStr(1, xArt, "clr(", vbTextCompare) Then
         xArt = Replace(xArt, "app.", vbNullString, , , vbTextCompare)
@@ -863,7 +878,7 @@ LoadMultiLink:
         If InStr(1, xArt, "-draft", vbTextCompare) Then Call eTweetXL_CLICK.DraftHdr_Clk: Exit Function      '//clear draft link
         If InStr(1, xArt, "-linker", vbTextCompare) Then Call eTweetXL_CLICK.LinkerHdr_Clk: Exit Function      '//clear Linker
         If InStr(1, xArt, "-post", vbTextCompare) Then Call eTweetXL_CLICK.PostHdr_Clk: Exit Function      '//clear draft link
-        If InStr(1, xArt, "-runtime", vbTextCompare) Then Call eTweetXL_CLICK.RuntimeHdr_Clk: Exit Function      '//clear time link
+        If InStr(1, xArt, "-runtime", vbTextCompare) Then Call eTweetXL_CLICK.RuntimeHdr_Clk: Exit Function     '//clear time link
         If InStr(1, xArt, "-user", vbTextCompare) Then Call eTweetXL_CLICK.UserHdr_Clk: Exit Function      '//clear user link
         
         '//default no parameter
@@ -964,17 +979,22 @@ LoadMultiLink:
     Exit Function
     
     '//Save current post
-        ElseIf InStr(1, xArt, "app.save.post", vbTextCompare) Or InStr(1, xArt, "save.post", vbTextCompare) Then
+        ElseIf InStr(1, xArt, "app.save.post(", vbTextCompare) Or InStr(1, xArt, "save.post(", vbTextCompare) Then
         wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.SavePostBtn_Clk")
         Exit Function
         
     '//Save linker state
-        ElseIf InStr(1, xArt, "app.save.linker", vbTextCompare) Or InStr(1, xArt, "save.linker", vbTextCompare) Then
+        ElseIf InStr(1, xArt, "app.save.linker(", vbTextCompare) Or InStr(1, xArt, "save.linker(", vbTextCompare) Then
         wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.SaveLinkerBtn_Clk")
+        Exit Function
+    
+    '//Trim post
+        ElseIf InStr(1, xArt, "app.trim.post(", vbTextCompare) Or InStr(1, xArt, "trim.post(", vbTextCompare) Then
+        wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.TrimPostBtn_Clk")
         Exit Function
         
     '//View instanced media
-        ElseIf InStr(1, xArt, "app.view.media", vbTextCompare) Or InStr(1, xArt, "view.media", vbTextCompare) Then
+        ElseIf InStr(1, xArt, "app.view.media(", vbTextCompare) Or InStr(1, xArt, "view.media(", vbTextCompare) Then
         wbMacro = Workbooks(appEnv).Application.Run("eTweetXL_CLICK.ViewMedBtn_Clk")
         Exit Function
         
@@ -998,7 +1018,7 @@ Private Function libFlag$(xArt, errLvl As Byte)
 
 On Error GoTo ErrMsg
 
-Call fndEnvironment(appEnv, appBlk)
+Call getEnvironment(appEnv, appBlk)
 
         '//Run script silently (ignore any application messages)
         If InStr(1, xArt, "--s", vbTextCompare) Then
@@ -1050,6 +1070,41 @@ End Function
 '//
 '//         CHANGE LOG
 '/\_________________________________________________________________________________________________________________________
+'
+'
+' Version: 1.0.6
+'
+' [ Date 7/26/2022 ]
+'
+' (1): Changed "sh." modifier to "show." & "hd." modifier to "hide."
+'
+' sh.home --> show.home
+' sh.setup --> show.setup
+' sh.post --> show.post
+' sh.queue --> show.queue
+' sh.apisetup --> show.apisetup
+' sh.me --> show.me
+'
+' hd.home --> hide.home
+' hd.setup --> hide.setup
+' hd.post --> hide.post
+' hd.queue --> hide.queue
+' hd.apisetup --> hide.apisetup
+' hd.me --> hide.me
+'
+'
+' [ Date 6/28/2022 ]
+'
+' (1): Changes to various lexer functions were reflected
+'
+' (2): Added "trim.post()" article for trimming a post fit the Twitter character limit of 280 (starts from the end
+'
+' (3): Added "load.post()" article for creating a draft from a designated text file
+'
+' Accepts 2 arguments: arg1 = Name of draft, arg2 = File path
+'
+' Example: load.post(xName, xPath); <---
+'
 '
 '
 ' Version: 1.0.5
