@@ -1,4 +1,5 @@
 Attribute VB_Name = "xlAppScript_xtwt"
+
 Public Function runLib$(Token)
 '/\____________________________________________________________________________________________________________________________
 '//
@@ -453,6 +454,7 @@ DelAllProfile:
         
 AddUser:
 '//Add draft to Linker position
+If Token = vbNullString Then Token = 0
 xPos = CDbl(Token) '//position
 
         Call eTweetXL_CLICK.AddUserBtn_Clk(xPos) '//Add runtime
